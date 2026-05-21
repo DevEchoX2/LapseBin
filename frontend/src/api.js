@@ -1,16 +1,30 @@
 const API_BASE = '/api'
 
-export async function startSession() {
-  const response = await fetch(`${API_BASE}/session/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  })
-
+export async function listInstances() {
+  const response = await fetch(`${API_BASE}/instances`, { cache: 'no-store' })
   if (!response.ok) {
-    throw new Error('Failed to start session')
+    throw new Error('Failed to fetch instance pool')
   }
 
   return response.json()
+}
+
+export async function startSession({ authToken, gameId, desktopMode }) {
+  const response = await fetch(`${API_BASE}/session/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ gameId, desktopMode }),
+  })
+
+  const payload = await response.json()
+  return {
+    ok: response.ok,
+    status: response.status,
+    payload,
+  }
 }
 
 export async function getSessionStatus(sessionId) {
@@ -19,11 +33,37 @@ export async function getSessionStatus(sessionId) {
     cache: 'no-store',
   })
 
+  const payload = await response.json()
+  return {
+    ok: response.ok,
+    status: response.status,
+    payload,
+  }
+}
+
+export async function redeemConnectToken({ sessionId, connectToken }) {
+  const response = await fetch(`${API_BASE}/session/connect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, connectToken }),
+  })
+
+  const payload = await response.json()
   if (!response.ok) {
-    return null
+    throw new Error(payload.message || 'Failed to redeem connect token')
   }
 
-  return response.json()
+  return payload
+}
+
+export async function disconnectSession(sessionId) {
+  const response = await fetch(`${API_BASE}/session/disconnect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, reason: 'CLIENT_DISCONNECT' }),
+  })
+
+  return response.ok
 }
 
 export async function submitWaitlist(email) {
