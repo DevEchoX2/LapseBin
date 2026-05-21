@@ -1,119 +1,83 @@
 const cors = require('cors')
 const express = require('express')
-const fs = require('fs/promises')
 const helmet = require('helmet')
-const path = require('path')
-const { randomUUID } = require('crypto')
+
+const config = require('./config')
+const { createInstancePoolService } = require('./services/instancePoolService')
+const { createSessionService } = require('./services/sessionService')
+const { createWaitlistService } = require('./services/waitlistService')
 
 const app = express()
-const PORT = Number(process.env.PORT || 5000)
-const SESSION_DURATION_MS = 50 * 60 * 1000
-const waitlistFilePath = process.env.WAITLIST_FILE || path.resolve(__dirname, '../data/waitlist.json')
-const sessions = new Map()
+
+const instancePoolService = createInstancePoolService({
+  instancePoolFile: config.INSTANCE_POOL_FILE,
+})
+
+const sessionService = createSessionService({
+  sessionDurationMs: config.SESSION_DURATION_MS,
+  connectTokenTtlMs: config.CONNECT_TOKEN_TTL_MS,
+  sessionLogFile: config.SESSION_LOG_FILE,
+  instancePoolService,
+})
+
+const waitlistService = createWaitlistService({
+  waitlistFile: config.WAITLIST_FILE,
+})
 
 app.use(helmet())
 app.use(cors())
-app.use(express.json({ limit: '10kb' }))
-
-async function ensureWaitlistFile() {
-  await fs.mkdir(path.dirname(waitlistFilePath), { recursive: true })
-
-  try {
-    await fs.access(waitlistFilePath)
-  } catch {
-    await fs.writeFile(waitlistFilePath, '[]\n', 'utf8')
-  }
-}
-
-function sanitizeEmail(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^\x20-\x7e]/g, '')
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function getSessionId(req) {
-  const raw = req.get('x-session-id') || req.query.sessionId || ''
-  return String(raw).trim()
-}
-
-app.post('/api/session/start', (_req, res) => {
-  const sessionId = randomUUID()
-  const expiresAt = Date.now() + SESSION_DURATION_MS
-  sessions.set(sessionId, expiresAt)
-
-  res.status(201).json({
-    sessionId,
-    expiresAt: new Date(expiresAt).toISOString(),
-    remainingMs: SESSION_DURATION_MS,
-  })
-})
-
-app.get('/api/session/status', (req, res) => {
-  const sessionId = getSessionId(req)
-  if (!sessionId || !sessions.has(sessionId)) {
-    return res.status(404).json({
-      active: false,
-      disconnect: true,
-      reason: 'SESSION_NOT_FOUND',
-      remainingMs: 0,
-    })
-  }
-
-  const expiresAt = sessions.get(sessionId)
-  const remainingMs = expiresAt - Date.now()
-
-  if (remainingMs <= 0) {
-    sessions.delete(sessionId)
-    return res.status(401).json({
-      active: false,
-      disconnect: true,
-      reason: 'SESSION_EXPIRED',
-      remainingMs: 0,
-    })
-  }
-
-  return res.json({
-    active: true,
-    disconnect: false,
-    sessionId,
-    expiresAt: new Date(expiresAt).toISOString(),
-    remainingMs,
-  })
-})
-
-app.post('/api/waitlist/signup', async (req, res) => {
-  const email = sanitizeEmail(req.body?.email)
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ message: 'Invalid email format.' })
-  }
-
-  await ensureWaitlistFile()
-
-  const raw = await fs.readFile(waitlistFilePath, 'utf8')
-  const entries = JSON.parse(raw)
-  entries.push({
-    email,
-    createdAt: new Date().toISOString(),
-  })
-
-  await fs.writeFile(waitlistFilePath, `${JSON.stringify(entries, null, 2)}\n`, 'utf8')
-
-  return res.status(201).json({ message: 'Waitlist signup successful.' })
-})
+app.use(express.json({ limit: '16kb' }))
 
 app.get('/api/ping', (_req, res) => {
   res.json({ ok: true, serverTime: new Date().toISOString() })
 })
 
-ensureWaitlistFile()
+app.get('/api/instances', async (_req, res) => {
+  const instances = await instancePoolService.list()
+  res.json({ instances })
+})
+
+app.post('/api/session/start', async (req, res) => {
+  const authToken = String(req.get('authorization') || req.body?.authToken || '').replace(/^Bearer\s+/i, '')
+  const gameId = req.body?.gameId ? String(req.body.gameId).trim() : ''
+  const desktopMode = Boolean(req.body?.desktopMode)
+
+  const result = await sessionService.startSession({ authToken, gameId, desktopMode })
+  res.status(result.status).json(result.payload)
+})
+
+app.get('/api/session/status', (req, res) => {
+  const result = sessionService.getStatus(req)
+  res.status(result.status).json(result.payload)
+})
+
+app.post('/api/session/connect', async (req, res) => {
+  const sessionId = String(req.body?.sessionId || '').trim()
+  const connectToken = String(req.body?.connectToken || '').trim()
+  const result = await sessionService.redeemConnectToken({ sessionId, connectToken })
+  res.status(result.status).json(result.payload)
+})
+
+app.post('/api/session/disconnect', async (req, res) => {
+  const sessionId = String(req.body?.sessionId || req.get('x-session-id') || '').trim()
+  const reason = String(req.body?.reason || 'USER_DISCONNECT').trim()
+  const result = await sessionService.forceDisconnect(sessionId, reason)
+  res.status(result.status).json(result.payload)
+})
+
+app.post('/api/waitlist/signup', async (req, res) => {
+  const result = await waitlistService.signup(req.body?.email)
+  if (!result.ok) {
+    return res.status(400).json({ message: result.error })
+  }
+
+  return res.status(201).json({ message: 'Waitlist signup successful.' })
+})
+
+Promise.all([instancePoolService.bootstrap(), sessionService.bootstrap(), waitlistService.bootstrap()])
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Backend listening on port ${PORT}`)
+    app.listen(config.PORT, () => {
+      console.log(`Backend listening on port ${config.PORT}`)
     })
   })
   .catch((error) => {
