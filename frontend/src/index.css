@@ -1,111 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  font-family: 'Inter', sans-serif;
+  color: #ffffff;
+  background-color: #000000;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  background: #000000;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
+  min-height: 100vh;
+}
+
+.app-shell {
+  max-width: 1200px;
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.topbar {
+  border: 1px solid #1e1e1e;
+  padding: 1.25rem;
+  background: #121212;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+.topbar h1 {
   margin: 0;
+  font-size: 1.6rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.02em;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.topbar p {
+  margin: 0.45rem 0 0;
+  color: #b5b5b5;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.2rem;
+}
+
+.panel {
+  border: 1px solid #1e1e1e;
+  background: #121212;
+  padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.panel-label {
+  margin: 0;
+  color: #8f8f8f;
+  font-size: 0.9rem;
+}
+
+.timer,
+.metric {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem;
+  letter-spacing: 0.03em;
+}
+
+.status-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #3a3a3a;
+  border: 1px solid #1e1e1e;
+}
+
+.status-dot.online {
+  background: #00ff66;
+  box-shadow: 0 0 0.4rem #00ff66;
+}
+
+.feature-list {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  color: #d8d8d8;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.waitlist {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.waitlist label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+}
+
+.waitlist input {
+  background: #000000;
+  border: 1px solid #1e1e1e;
+  color: #ffffff;
+  padding: 0.65rem 0.75rem;
+  outline: none;
+}
+
+.waitlist input:focus {
+  border-color: #00ff66;
+}
+
+.validation {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.validation.ok {
+  color: #7a7a7a;
+}
+
+.validation.bad,
+.error-msg {
+  color: #f4f4f4;
+}
+
+.success-msg {
+  margin: 0;
+  color: #00ff66;
+}
+
+.action-btn {
+  width: fit-content;
+  border: 1px solid #1e1e1e;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  border-color: #00ff66;
 }

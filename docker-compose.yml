@@ -1,0 +1,51 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lapsebin-frontend
+    expose:
+      - "3000"
+    networks:
+      - lapsebin_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lapsebin-backend
+    environment:
+      - PORT=5000
+      - WAITLIST_FILE=/app/data/waitlist.json
+    expose:
+      - "5000"
+    volumes:
+      - waitlist_data:/app/data
+    networks:
+      - lapsebin_net
+
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: lapsebin-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - lapsebin_net
+
+networks:
+  lapsebin_net:
+    driver: bridge
+
+volumes:
+  waitlist_data:
+  caddy_data:
+  caddy_config:
