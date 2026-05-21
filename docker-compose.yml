@@ -16,11 +16,14 @@ services:
     container_name: lapsebin-backend
     environment:
       - PORT=5000
+      - DATA_DIR=/app/data
       - WAITLIST_FILE=/app/data/waitlist.json
+      - INSTANCE_POOL_FILE=/app/data/instance-pool.json
+      - SESSION_LOG_FILE=/app/data/session-log.json
     expose:
       - "5000"
     volumes:
-      - waitlist_data:/app/data
+      - orchestrator_data:/app/data
     networks:
       - lapsebin_net
 
@@ -46,6 +49,6 @@ networks:
     driver: bridge
 
 volumes:
-  waitlist_data:
+  orchestrator_data:
   caddy_data:
   caddy_config:
