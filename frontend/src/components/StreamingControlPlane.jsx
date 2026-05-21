@@ -207,7 +207,11 @@ export default function StreamingControlPlane({ selection }) {
       }
 
       if (!response.ok || response.payload.disconnect) {
-        await handleEnd()
+        clearWebRtc()
+        setSession(null)
+        setRemainingMs(0)
+        setStatus('idle')
+        setSignalStatus('offline')
         return
       }
 
