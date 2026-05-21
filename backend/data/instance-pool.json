@@ -1,0 +1,26 @@
+[
+  {
+    "id": "worker-01",
+    "name": "GPU Node A",
+    "host": "worker-01.internal",
+    "signalingEndpoint": "wss://worker-01.example.com/signal",
+    "status": "idle",
+    "tenantSessionId": null
+  },
+  {
+    "id": "worker-02",
+    "name": "GPU Node B",
+    "host": "worker-02.internal",
+    "signalingEndpoint": "wss://worker-02.example.com/signal",
+    "status": "idle",
+    "tenantSessionId": null
+  },
+  {
+    "id": "worker-03",
+    "name": "Desktop Node",
+    "host": "worker-03.internal",
+    "signalingEndpoint": "wss://worker-03.example.com/signal",
+    "status": "idle",
+    "tenantSessionId": null
+  }
+]
